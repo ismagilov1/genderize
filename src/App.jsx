@@ -1,35 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [gender, setGender] = useState();
+  const [name, setName] = useState();
+  // https://api.genderize.io?name=Pavel
+  let requestObj = {};
+
+  async function getGender(nameToCheck) {
+    return await fetch(`https://api.genderize.io?name=${nameToCheck}`).then(
+      (response) => response.json().then((result) => (requestObj = result))
+    );
+  }
+
+  async function checkGender(e) {
+    e.preventDefault();
+    const data = new FormData(e.target);
+    const name = data.get("name");
+    setName(name);
+    const newGender = await getGender(name);
+    setGender(newGender);
+    localStorage.setItem("data", JSON.stringify(requestObj));
+  }
+
+  useEffect(() => {
+    if (localStorage) {
+      const localData = localStorage.getItem("data");
+      const parseData = JSON.parse(localData);
+      setGender(parseData.gender);
+      setName(parseData.name);
+    }
+  }, [gender]);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className="app">
+        <form onSubmit={checkGender}>
+          <input name="name" className="input" id="name" type="text" />
+          <button>Check</button>
+          <p>
+            History:
+            {gender === "male" ? (
+              <p>{name}-Male</p>
+            ) : gender === "female" ? (
+              <p>{name}-Female</p>
+            ) : (
+              <p>Unknown</p>
+            )}
+          </p>
+        </form>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
